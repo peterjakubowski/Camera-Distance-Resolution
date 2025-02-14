@@ -8,7 +8,15 @@ Tool to calculate and visualize resolution, sensor usage, and camera and lightin
 
 ## Using the Distance and Resolution tool
 
-Enter Parameters:
+### Launch
+
+Launch the streamlit app in your web browser from you cli.
+
+```commandline
+streamlit run app.py
+```
+
+### Enter Parameters:
 * camera: Choose a camera or digital back from the dictionary of cameras
 * lens_focal_len_mm: Select the focal length of the lens in millimeters
 * real_object_units: Select the unit of measurement used to measure the width and height of the artwork
@@ -17,7 +25,7 @@ Enter Parameters:
 * set_ppi: Set to desired resolution in pixels per inch
 * radius_multiply: Set to desired radius multiplier to control light coverage. A value of 1 will set light coverage to fit object at 100%. Increase multiplier to expand light coverage and reduce vignetting in image area.
 
-Output:
+### Output:
 * Sensor usage in percent for width and height
 * MAX PPI: The maximum ppi value possible with selected camera and focal length when fitting the whole artwork within
 * 5% Fit PPI: The maximum ppi value possible reduced by 5%
