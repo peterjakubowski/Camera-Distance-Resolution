@@ -26,7 +26,7 @@ class Sensor(BaseModel):
 sensors: dict[str, Sensor] = {}
 
 # load the dictionary of digital camera bodies and backs with sensor size and pixel dimensions
-with open("data/cameras.json", "r") as file:
+with open("data/sensors.json", "r") as file:
     sensor_dict = json.loads(file.read())
     for name, attr in sensor_dict.items():
         sensors[name] = Sensor(**attr)
