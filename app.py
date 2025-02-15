@@ -12,7 +12,7 @@ from tools import convert_units, print_measurements, plot_sensor_fit, plot_light
 
 
 # ==============================
-# ======== Form fields =========
+# ======== Sensor Info =========
 # ==============================
 
 
@@ -164,7 +164,7 @@ if calculate:
             st.text("MAX PPI: " + str(round(max_h_px, 2)))
             st.text("5% Fit PPI: " + str(round(max_h_px * .95, 2)))
 
-        st.text("\nDimensions: " + str(object_w_px) + " x " + str(object_h_px) + " pixels")
+        st.text("Dimensions: " + str(object_w_px) + " x " + str(object_h_px) + " pixels")
         st.text("PPI: " + str(round(PPI, 2)))
 
     with col2:
