@@ -14,6 +14,25 @@ import matplotlib.patches as patches
 import matplotlib.lines as lines
 
 
+def calculate_max_ppi(sensor, real_object_width, real_object_height):
+    """
+
+    :param sensor:
+    :param real_object_width:
+    :param real_object_height:
+    :return:
+    """
+
+    sensor_ratio = sensor.sensor_w_px / sensor.sensor_h_px
+    max_w_px = int(floor(sensor.sensor_w_px / real_object_width))
+    max_h_px = int(floor(sensor.sensor_h_px / real_object_height))
+
+    if real_object_width >= real_object_height * sensor_ratio:
+        return max_w_px
+
+    return max_h_px
+
+
 def convert_units(measurement: float, unit: Literal["mm", "cm", "inches"] = "inches") -> tuple[float, float, float]:
     """
     Convert a measurement to mm, cm, and inches
@@ -97,32 +116,26 @@ def plot_sensor_fit(sensor, object_w_on_film_mm, object_h_on_film_mm):
     return fig
 
 
-def plot_lighting_diagram(st_session_state, distance, max_w_in):
+def plot_lighting_diagram(real_object_width, real_object_height, radius_multiply, distance, max_w_in):
     """
-    Plots the lighting diagram using Matplotlib.  Assumes st.session_state is
-    accessible (e.g., passed as an argument or globally available).
+    Plots the lighting diagram using Matplotlib.
 
     Args:
-        st_session_state:  A dictionary-like object (likely from Streamlit) containing
-                           the state variables: real_object_width, real_object_height,
-                           radius_multiply.  It's crucial that these attributes are
-                           accessible and valid.
-        distance: The distance value for the diagram.
-        max_w_in: The maximum width value for the diagram.
+
     """
 
     # Create a figure and axes
     fig, ax = plt.subplots(1)
 
     # Artwork rectangle
-    artwork = patches.Rectangle(((-st_session_state.real_object_width / 2), -st_session_state.real_object_height),
-                                st_session_state.real_object_width,
-                                st_session_state.real_object_height,
+    artwork = patches.Rectangle(((-real_object_width / 2), -real_object_height),
+                                real_object_width,
+                                real_object_height,
                                 fc='lightblue',
                                 ec="blue")
 
     # Radius calculation
-    radius = (st_session_state.real_object_width * st_session_state.radius_multiply) / 2
+    radius = (real_object_width * radius_multiply) / 2
 
     # Camera placement line
     camera_placement = lines.Line2D((0, 0), (0, distance), lw=1.5, color='black')  # added color
@@ -164,8 +177,13 @@ def plot_lighting_diagram(st_session_state, distance, max_w_in):
     ax.add_line(light_2a)
     ax.add_line(light_2b)
 
+    # Add text annotations
+    ax.text(0, distance, "camera", fontsize=10, ha='center', va='bottom')  # camera location
+    ax.text(light_1x, light_1y * 1.025, "light", fontsize=10, ha='center', va='bottom')  # light 1 location
+    ax.text(light_2x, light_2y * 1.025, "light", fontsize=10, ha='center', va='bottom')  # light 2 location
+
     # Set axis limits and styling
-    ax.set_ylim(-st_session_state.real_object_height, distance * 1.2)
+    ax.set_ylim(-real_object_height, int(distance * 2))
     ax.axhline(0, color='black')
     ax.axis('equal')
     # ax.set_aspect('equal')  # ensures correct aspect ratio instead of using plt.axis('equal')
