@@ -1,4 +1,4 @@
-# Camera Distance and Resolution
+# Camera and Lighting Positioning Calculator
 #
 # Author: Peter Jakubowski
 # Date: 2/14/2025
@@ -76,122 +76,112 @@ def print_measurements(measurements: tuple[float, float, float]) -> str:
     return string
 
 
-def plot_sensor_fit(sensor, object_w_on_film_mm, object_h_on_film_mm):
+def plot_lighting_diagram(real_object_width, real_object_height, radius_multiply, distance, max_w_in, max_h_in):
     """
-    Plots the sensor and object fit using Matplotlib.
-
-    Args:
-        sensor: An object with sensor_w_mm and sensor_h_mm attributes
-                representing the sensor width and height in millimeters.
-        object_w_on_film_mm: The width of the object projected onto the sensor, in millimeters.
-        object_h_on_film_mm: The height of the object projected onto the sensor, in millimeters.
+    Plots the lighting diagram using Matplotlib with emojis.
     """
 
     # Create a figure and axes
-    fig, ax = plt.subplots(1)  # creates the figure and assigns the axes to 'ax'
+    fig, ax = plt.subplots(1, figsize=(6,5), dpi=300)
 
-    # Calculate object position
-    object_x = (sensor.sensor_w_mm / 2) - (object_w_on_film_mm / 2)
-    object_y = (sensor.sensor_h_mm / 2) - (object_h_on_film_mm / 2)
-
-    # Create sensor and object shapes
-    sensor_shape = patches.Rectangle((0, 0), sensor.sensor_w_mm, sensor.sensor_h_mm, fc='lightblue', ec="red")
-    object_shape = patches.Rectangle((object_x, object_y), object_w_on_film_mm, object_h_on_film_mm, fc='white', ec="blue")
-
-    # Add the shapes to the axes
-    ax.add_patch(sensor_shape)
-    ax.add_patch(object_shape)
-
-    # Set the title and axis scaling
-    ax.set_title('Sensor Fit')
-    ax.axis('scaled')  # Ensure correct aspect ratio
-
-    # Set axis limits to view the whole sensor
-    ax.set_xlim(0, sensor.sensor_w_mm)
-    ax.set_ylim(0, sensor.sensor_h_mm)
-
-    # Show the plot (optional if you are integrating with other code)
-    # plt.show()
-
-    return fig
-
-
-def plot_lighting_diagram(real_object_width, real_object_height, radius_multiply, distance, max_w_in):
-    """
-    Plots the lighting diagram using Matplotlib.
-
-    Args:
-
-    """
-
-    # Create a figure and axes
-    fig, ax = plt.subplots(1)
+    # Camera image area
+    camera_view = patches.Rectangle(((-max_w_in / 2), (-max_h_in / 2)),
+                                    max_w_in,
+                                    max_h_in,
+                                    fc='#FF7F00',  # Orange
+                                    ec="#FF0000",  # Red
+                                    lw=1.0,
+                                    alpha=1.0)
+    ax.add_patch(camera_view)
 
     # Artwork rectangle
-    artwork = patches.Rectangle(((-real_object_width / 2), -real_object_height),
+    artwork = patches.Rectangle(((-real_object_width / 2), (-real_object_height / 2)),
                                 real_object_width,
                                 real_object_height,
-                                fc='lightblue',
-                                ec="blue")
+                                fc='#B0E2FF',  # Light Steel Blue
+                                ec="#4682B4",  # Steel Blue
+                                lw=1.2,
+                                alpha=1.0)
+    ax.add_patch(artwork)
 
     # Radius calculation
     radius = (real_object_width * radius_multiply) / 2
 
-    # Camera placement line
-    camera_placement = lines.Line2D((0, 0), (0, distance), lw=1.5, color='black')  # added color
+    # Add a yellow circle between the lights
+    circle = patches.Circle((0, 0), radius=radius, color='#FFD700', alpha=0.2)
+    ax.add_patch(circle)
 
-    # Camera view lines
-    camera_v1 = max_w_in / 2
-    camera_v1_line = lines.Line2D((camera_v1, 0), (0, distance), lw=1.5, linestyle='dashed',
-                                  color='black')  # added color
-    camera_v2 = -max_w_in / 2
-    camera_v2_line = lines.Line2D((camera_v2, 0), (0, distance), lw=1.5, linestyle='dashed',
-                                  color='black')  # added color
+    # Add an "x" at the center of the rectangle
+    ax.text(0, 0, "x", fontsize=10, ha='center', va='center', color='black')
 
-    # Light 1 lines
+    # Camera placement arrow
+    ax.arrow(0.0, distance, 0.0, -distance * 0.95,  # Changed start and end points
+             lw=1.5, color='#000000',
+             alpha=1.0,
+             head_width=0.35, head_length=0.6,  # Reduced head size
+             overhang=0.0,  # No overhang
+             length_includes_head=True)
+
+    # Light 1 arrow
     light_1x = radius * 2.5
     light_1y = radius * 2
-    light_1 = lines.Line2D((0, light_1x), (0, light_1y), lw=1.5, color='black')  # added color
-    light_1a = lines.Line2D((radius, light_1x), (0, light_1y), lw=1.5, linestyle='dashed', color='black')  # added color
-    light_1b = lines.Line2D((radius, radius - (light_1x - radius)), (0, light_1y), lw=1.5, linestyle='dotted',
-                            color='black')  # added color
+    ax.arrow(light_1x, light_1y, -light_1x * 0.95, -light_1y * 0.95,  # Changed start and end points
+             lw=1.5, color='#000000',
+             head_width=0.35, head_length=0.6,  # Reduced head size
+             overhang=0,
+             length_includes_head=True)
 
-    # Light 2 lines
+    light_1a = lines.Line2D((light_1x, light_1x), (0, light_1y), lw=1.5, linestyle=':', color='#778899')
+    light_1b = lines.Line2D((light_1x, 0), (0, 0), lw=1.5, linestyle=':',
+                            color='#778899')
+
+    # Light 2 arrow
     light_2x = -radius * 2.5
     light_2y = radius * 2
-    light_2 = lines.Line2D((0, light_2x), (0, light_2y), lw=1.5, color='black')  # added color
-    light_2a = lines.Line2D((-radius, light_2x), (0, light_2y), lw=1.5, linestyle='dashed',
-                            color='black')  # added color
-    light_2b = lines.Line2D((-radius, -radius - (light_2x + radius)), (0, light_2y), lw=1.5, linestyle='dotted',
-                            color='black')  # added color
+    ax.arrow(light_2x, light_2y, -light_2x * 0.95, -light_2y * 0.95,  # Changed start and end points
+             lw=1.5, color='#000000',
+             head_width=0.35, head_length=0.6,  # Reduced head size
+             overhang=0,
+             length_includes_head=True)
 
     # Add elements to the axes
-    ax.add_patch(artwork)
-    ax.add_line(camera_placement)
-    ax.add_line(camera_v1_line)
-    ax.add_line(camera_v2_line)
-    ax.add_line(light_1)
     ax.add_line(light_1a)
     ax.add_line(light_1b)
-    ax.add_line(light_2)
-    ax.add_line(light_2a)
-    ax.add_line(light_2b)
 
     # Add text annotations
-    ax.text(0, distance, "camera", fontsize=10, ha='center', va='bottom')  # camera location
-    ax.text(light_1x, light_1y * 1.025, "light", fontsize=10, ha='center', va='bottom')  # light 1 location
-    ax.text(light_2x, light_2y * 1.025, "light", fontsize=10, ha='center', va='bottom')  # light 2 location
+    ax.text(0, distance * 1.025, "camera", fontsize=10, ha='center', va='bottom', color="#101010")
+    ax.text(light_1x, light_1y * 1.025, "light", fontsize=10, ha='center', va='bottom', color="#101010")
+    ax.text(light_2x, light_2y * 1.025, "light", fontsize=10, ha='center', va='bottom', color="#101010")
+    ax.text(-max_w_in / 2, -max_h_in / 2, "image area", fontsize=8, ha='left', va='top',
+            color="#101010")  # Image area
+    ax.text(-real_object_width / 2, -real_object_height / 2, "object", fontsize=8, ha='left', va='bottom',
+            color="#101010")  # Object area
+
+    # Add labels for light distances
+    ax.text(light_1x / 1.5, -1, f'{light_1x:.2f} in', fontsize=8, ha='center', va='top',
+            color='black')  # Label for light_1x distance
+    ax.text(light_1x - 1, light_1y / 2.5, f'{light_1y:.2f} in', fontsize=8, ha='right', va='center',
+            color='black')  # Label for light_1y distance
+    ax.text(-1, distance / 1.5, f'{distance:.2f} in', fontsize=8, ha='right', va='center',
+            color='black')  # Label for light_2x distance
 
     # Set axis limits and styling
-    ax.set_ylim(-real_object_height, int(distance * 2))
-    ax.axhline(0, color='black')
+    ax.set_ylim(-distance * 0.5, distance * 1.2)  # Adjusted ylim
+    ax.set_xlim(-light_1x * 1.2, light_1x * 1.2)  # Adjusted xlim
     ax.axis('equal')
-    # ax.set_aspect('equal')  # ensures correct aspect ratio instead of using plt.axis('equal')
+    ax.tick_params(axis='both', labelsize=8)
+
+    # Add grid
+    ax.grid(True, linestyle='--', alpha=0.3)
 
     # Set the title
-    ax.set_title('Lighting Diagram')
+    # ax.set_title('Lighting Diagram\n', fontsize=14, color="#333333")
 
-    # Show the plot
-    # plt.show()
+    # Set x label
+    ax.set_xlabel('inches', fontsize=10)
+
+    # Remove the frame
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
 
     return fig, light_1x, light_1y
