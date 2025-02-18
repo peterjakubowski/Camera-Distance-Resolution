@@ -1,6 +1,6 @@
-# Camera Distance and Resolution
+# Camera and Lighting Positioning
 
-Tool to calculate and visualize resolution, sensor usage, and camera and lighting distances for flat art and copywork setups.
+Tool to calculate and visualize camera and lighting distances for flat art and copywork setups.
 
 1). Given a camera, lens, and object (usually flat works like flat art on paper, paintings, prints, etc.), determine the camera position for a chosen output resolution. The distance between camera and object is returned.
 
