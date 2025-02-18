@@ -1,4 +1,4 @@
-# Camera Distance and Resolution
+# Camera and Lighting Positioning Calculator
 #
 # Author: Peter Jakubowski
 # Date: 2/14/2025
@@ -8,8 +8,9 @@
 import streamlit as st
 import pandas as pd
 import json
+from io import BytesIO
 from pydantic import BaseModel
-from tools import convert_units, print_measurements, plot_sensor_fit, plot_lighting_diagram, calculate_max_ppi
+from tools import convert_units, print_measurements, plot_lighting_diagram, calculate_max_ppi
 
 
 # ==============================
@@ -36,9 +37,9 @@ with open("data/sensors.json", "r") as file:
 # ========= Streamlit ==========
 # ==============================
 
-st.header('Distance and Resolution')
+st.header('Camera and Lighting Positioning')
 
-st.write('Calculate resolution, sensor usage, and camera and lighting distances for flat art and copywork setups.')
+st.write('Calculate camera and lighting distances for flat art and copywork setups.')
 
 st.divider()
 
@@ -60,13 +61,6 @@ with (st.sidebar):
                  index=7
                  )
 
-    # select the unit of measurement used to measure the width and height of the artwork
-    st.selectbox(label="Unit of measurement",
-                 key="real_object_units",
-                 options=["mm", "cm", "inches"],
-                 index=2,
-                 )
-
     # set the object width, physical measurement
     st.number_input(label="Object width",
                     key="real_object_width",
@@ -85,6 +79,13 @@ with (st.sidebar):
                     value=8.00
                     )
 
+    # select the unit of measurement used to measure the width and height of the artwork
+    st.selectbox(label="Unit of measurement",
+                 key="real_object_units",
+                 options=["mm", "cm", "inches"],
+                 index=2,
+                 )
+
     # set the desired resolution in pixels per inch (ppi)
     st.number_input(label="Resolution (ppi)",
                     key="set_ppi",
@@ -100,12 +101,8 @@ with (st.sidebar):
               min_value=1.0,
               max_value=5.0,
               step=0.05,
-              value=2.5
+              value=3.0
               )
-
-    # click the button when ready to calculate results
-    calculate = st.button(label="Calculate",
-                          key="calculate")
 
     # ==============================
     # ========= Calculate ==========
@@ -153,6 +150,7 @@ with (st.sidebar):
     sensor_usage_w = round((object_w_on_film_mm / sensor.sensor_w_mm) * 100, 2)
     sensor_usage_h = round((object_h_on_film_mm / sensor.sensor_h_mm) * 100, 2)
     max_w_in = sensor.sensor_w_px / PPI
+    max_h_in = sensor.sensor_h_px / PPI
 
     # check light coverage
     if (real_object_width * st.session_state.radius_multiply) / 2 < max_w_in / 2:
@@ -163,50 +161,46 @@ with (st.sidebar):
         st.warning("Warning! The light coverage does not cover the entire viewing area. "
                    f"Increase light coverage to a minimum of {round(_radius, 2)}")
 
-if calculate:
+if object_w_on_film_mm > sensor.sensor_w_mm:
+    st.warning("Warning! The object width does not fit in frame.")
+if object_h_on_film_mm > sensor.sensor_h_mm:
+    st.warning("Warning! The object height does not fit in frame.")
 
-    if object_w_on_film_mm > sensor.sensor_w_mm:
-        st.warning("Warning! The object width does not fit in frame.")
-    if object_h_on_film_mm > sensor.sensor_h_mm:
-        st.warning("Warning! The object height does not fit in frame.")
+lighting_diagram, light_1x, light_1y = plot_lighting_diagram(real_object_width,
+                                                             real_object_height,
+                                                             st.session_state.radius_multiply,
+                                                             distance,
+                                                             max_w_in,
+                                                             max_h_in)
 
-    lighting_diagram, light_1x, light_1y = plot_lighting_diagram(real_object_width,
-                                                                 real_object_height,
-                                                                 st.session_state.radius_multiply,
-                                                                 distance,
-                                                                 max_w_in)
+# ============================
+# ====== Plot diagrams =======
+# ============================
 
-    # ============================
-    # ====== Plot diagrams =======
-    # ============================
+# Create a buffer for the figure
+buf = BytesIO()
+# Save the figure in the buffer
+lighting_diagram.savefig(buf, format='png')
+# Display the figure buffer image
+st.image(buf)
 
-    col1, col2 = st.columns(2)
+# st.pyplot(fig=lighting_diagram)
 
-    with col1:
-        # plot figure showing object fit on sensor
-        st.pyplot(fig=plot_sensor_fit(sensor, object_w_on_film_mm, object_h_on_film_mm))
+summary = [("Camera", st.session_state.camera),
+           ("Lens focal length", f"{st.session_state.lens_focal_len_mm}mm"),
+           ("Sensor size mm", f"{sensor.sensor_w_mm} x {sensor.sensor_h_mm}"),
+           ("Sensor size pixels", f"{sensor.sensor_w_px} x {sensor.sensor_h_px}"),
+           ("Sensor usage width", f"{sensor_usage_w}%"),
+           ("Sensor usage height", f"{sensor_usage_h}%"),
+           ("Camera to object distance", f"{print_measurements(convert_units(distance, "inches"))}"),
+           ("Lights distance x", f"{print_measurements(convert_units(light_1x, "inches"))}"),
+           ("Lights distance y", f"{print_measurements(convert_units(light_1y, "inches"))}"),
+           ("Object width", f"{print_measurements(convert_units(real_object_width, "inches"))}"),
+           ("Object height", f"{print_measurements(convert_units(real_object_height, "inches"))}"),
+           ("Object dimensions pixels", f"{object_w_px} x {object_h_px}"),
+           ("Object resolution (ppi)", f"{PPI}")
+           ]
 
-    with col2:
-        # plot figure showing camera and lighting diagram
-        st.pyplot(fig=lighting_diagram)
+df = pd.DataFrame(data=summary, columns=[0, 1])
 
-    summary = [("Camera", st.session_state.camera),
-               ("Lens focal length", f"{st.session_state.lens_focal_len_mm}mm"),
-               ("Sensor size mm", f"{sensor.sensor_w_mm} x {sensor.sensor_h_mm}"),
-               ("Sensor size pixels", f"{sensor.sensor_w_px} x {sensor.sensor_h_px}"),
-               ("Sensor usage width", f"{sensor_usage_w}%"),
-               ("Sensor usage height", f"{sensor_usage_h}%"),
-               ("Camera to object distance", f"{print_measurements(convert_units(distance, "inches"))}"),
-               ("Lights distance x", f"{print_measurements(convert_units(light_1x, "inches"))}"),
-               ("Lights distance y", f"{print_measurements(convert_units(light_1y, "inches"))}"),
-               ("Object width", f"{print_measurements(convert_units(real_object_width, "inches"))}"),
-               ("Object height", f"{print_measurements(convert_units(real_object_height, "inches"))}"),
-               ("Object dimensions pixels", f"{object_w_px} x {object_h_px}"),
-               ("Object resolution (ppi)", f"{PPI}")
-               ]
-
-    df = pd.DataFrame(data=summary, columns=[0, 1])
-
-    st.table(df)
-
-
+st.table(df)
