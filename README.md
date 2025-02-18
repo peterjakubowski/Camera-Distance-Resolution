@@ -6,7 +6,7 @@ Tool to calculate and visualize camera and lighting distances for flat art and c
 
 2). Given an object, determine the position of lights (a minimum of two, one on each side of the object).
 
-## Using the Distance and Resolution tool
+## Using the tool
 
 ### Launch
 
