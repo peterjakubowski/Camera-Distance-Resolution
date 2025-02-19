@@ -8,9 +8,13 @@ Tool to calculate and visualize camera and lighting distances for flat art and c
 
 ## Using the tool
 
-### Launch
+### Streamlit Community Cloud
 
-Launch the streamlit app in your web browser from you cli.
+Use the app on Streamlit Community Cloud: [https://camera-lighting-positioning.streamlit.app/](https://camera-lighting-positioning.streamlit.app/)
+
+### Install Locally
+
+Clone the repository and launch the streamlit app in your web browser from you cli.
 
 ```commandline
 streamlit run app.py
